@@ -97,6 +97,42 @@ class Servidor:
                 self.desconectar_cliente(cliente)
                 break
 
+    def enviar(self):
+        while True:
+            # Recoge el mensaje que envía el servidor
+            mensaje = input("> ")
+
+            # En caso de que el mensaje sea salir, cierra el servidor completo
+            if mensaje == "/cerrar":
+                print(f"\n\033[1;31m \n Cerrando servidor... \033[0m")
+                self.guardar_en_historial("servidor", mensaje)
+                self.guardar_en_historial("servidor", "Cerrando servidor")
+
+                # Envia a todos los clientes que el servidor va a cerrar
+                for cliente in list(self.datos_usuarios.keys()):
+                    cliente.send("Server: cerrando servidor".encode())
+
+                    # Luego de enviar el mensaje de salir, desconecta los clientes
+                    self.desconectar_cliente(cliente, saliendo=True)
+
+                break
+
+            # Si el mensaje es /kick, expulsa al usuario
+            elif "/kick" in mensaje:
+                self.expulsar(mensaje)
+
+            # Si el mensaje es /users, muestra los usuarios
+            elif "/users" == mensaje:
+                self.mostrar_usuarios()
+
+            self.guardar_en_historial("servidor", mensaje)
+
+            # Formatea el mensaje
+            mensaje_formateado = f"\033[1;36mServidor: {mensaje}\033[0m"
+
+            # Lo reenvía a todos los clientes
+            self.reenviar_mensaje(mensaje_formateado, None)
+
     @staticmethod
     def mostrar_mensaje(mensaje):
         # Da un formato al mensaje para que se vea de una forma legible
@@ -104,7 +140,7 @@ class Servidor:
         print("\r" + mensaje)
         print("> ", end="", flush=True)
 
-    def desconectar_cliente(self, cliente, saliendo=None):
+    def desconectar_cliente(self, cliente, saliendo=False):
         # Comprueba si el cliente existe
         if cliente not in self.datos_usuarios:
             return
@@ -142,42 +178,6 @@ class Servidor:
                     # En caso de error, desconecta al cliente para evitar errores
                     self.desconectar_cliente(cliente)
 
-    def enviar(self):
-        while True:
-            # Recoge el mensaje que envía el servidor
-            mensaje = input("> ")
-
-            # En caso de que el mensaje sea salir, cierra el servidor completo
-            if mensaje == "/cerrar":
-                print(f"\n\033[1;31m \n Cerrando servidor... \033[0m")
-                self.guardar_en_historial("servidor", mensaje)
-                self.guardar_en_historial("servidor", "Cerrando servidor")
-
-                # Envia a todos los clientes que el servidor va a cerrar
-                for cliente in list(self.datos_usuarios.keys()):
-                    cliente.send("Server: salir".encode())
-
-                    # Luego de enviar el mensaje de salir, desconecta los clientes
-                    self.desconectar_cliente(cliente, saliendo=True)
-
-                break
-
-            # Si el mensaje es /kick, expulsa al usuario
-            elif "/kick" in mensaje:
-                self.expulsar(mensaje)
-
-            # Si el mensaje es /users, muestra los usuarios
-            elif "/users" == mensaje:
-                self.mostrar_usuarios()
-
-            self.guardar_en_historial("servidor", mensaje)
-
-            # Formatea el mensaje
-            mensaje_formateado = f"\033[1;36mServidor: {mensaje}\033[0m"
-
-            # Lo reenvía a todos los clientes
-            self.reenviar_mensaje(mensaje_formateado, None)
-
     def ejecutar(self):
         threading.Thread(target=self.conectar, daemon=True).start()
         # El hilo principal es el de enviar información
@@ -198,11 +198,10 @@ class Servidor:
             # Recorre los clientes para saber su nombre, y así expulsar al usuario
             for cliente, info in list(self.datos_usuarios.items()):
                 if info["nombre"] == usuario:
-
+                    self.mostrar_mensaje(f" \033[1;31m Se ha expulsado a {usuario} \033[0m")
                     self.reenviar_mensaje(f"Se ha expulsado a {usuario}", None)
-
                     # Llama a la función desconectar para echarlo
-                    self.desconectar_cliente(cliente)
+                    self.desconectar_cliente(cliente, True)
                     encontrado = True  # Para comprobar que el usuario existe
 
             if not encontrado:

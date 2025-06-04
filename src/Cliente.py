@@ -22,13 +22,18 @@ class Cliente:
                     salida = f"\033[1;31m \nTe han expulsado del servidor. \033[0m"
                     self.mostrar_mensaje(salida)
                     self.cliente.close()
-                    sys.exit()
+                    break
 
                 # Si el mensaje es salir, el usuario se desconecta
-                elif mensaje.endswith("salir") or not mensaje:
-                    print(f"\n\033[1;31m \n El servidor se ha cerrado \033[0m")
+                elif mensaje.endswith("cerrando servidor"):
+                    self.mostrar_mensaje(f"\n\033[1;31m \n El servidor se ha cerrado \033[0m")
                     self.cliente.close()
-                    sys.exit()
+                    break
+
+                elif not mensaje:
+                    self.mostrar_mensaje(f"\n\033[1;31m \n Saliendo... \033[0m")
+                    self.cliente.close()
+                    break
 
                 self.mostrar_mensaje(mensaje)
 
@@ -38,12 +43,11 @@ class Cliente:
                 self.cliente.close()
                 break
 
-    def mostrar_mensaje(self, mensaje):
+    @staticmethod
+    def mostrar_mensaje(mensaje):
         print("\r" + " " * 80, end="")
         print("\r" + mensaje)
-
-        if mensaje != f"Se ha expulsado a {self.nombre}" or mensaje != "El servidor se ha cerrado":
-            print("> ", end="", flush=True)
+        print("> ", end="", flush=True)
 
     def enviar(self):
         while True:
@@ -61,10 +65,10 @@ class Cliente:
 
     def ejecutar(self):
         # Ejecuta la función de escuchar en un hilo
-        threading.Thread(target=self.escuchar, daemon=True).start()
+        threading.Thread(target=self.enviar, daemon=True).start()
 
         # El hilo principal es el de enviar información
-        self.enviar()
+        self.escuchar()
 
 
 if __name__ == "__main__":
