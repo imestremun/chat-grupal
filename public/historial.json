@@ -28,5 +28,47 @@
         "ip": "192.168.100.73",
         "nombre": "Servidor",
         "mensaje": "se ha conectado edu desde 192.168.100.73"
+    },
+    {
+        "timestamp": "2025-06-04 18:04:48",
+        "ip": "192.168.1.108",
+        "nombre": "Servidor",
+        "mensaje": "se ha conectado juan desde 192.168.1.108"
+    },
+    {
+        "timestamp": "2025-06-04 18:04:57",
+        "ip": "192.168.1.108",
+        "nombre": "Servidor",
+        "mensaje": "hola juan, que tal estas amigo?"
+    },
+    {
+        "timestamp": "2025-06-04 18:05:05",
+        "ip": "192.168.1.108",
+        "nombre": "juan",
+        "mensaje": "bastante bien servidor"
+    },
+    {
+        "timestamp": "2025-06-04 18:05:18",
+        "ip": "192.168.1.108",
+        "nombre": "juan",
+        "mensaje": "eres un tonto"
+    },
+    {
+        "timestamp": "2025-06-04 18:05:22",
+        "ip": "192.168.1.108",
+        "nombre": "Servidor",
+        "mensaje": "/kick juan"
+    },
+    {
+        "timestamp": "2025-06-04 18:08:42",
+        "ip": "192.168.1.108",
+        "nombre": "Servidor",
+        "mensaje": "se ha conectado hola desde 192.168.1.108"
+    },
+    {
+        "timestamp": "2025-06-04 18:08:48",
+        "ip": "192.168.1.108",
+        "nombre": "Servidor",
+        "mensaje": "/kick hola"
     }
 ]

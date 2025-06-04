@@ -7,20 +7,25 @@ class Cliente:
     def __init__(self, nombre):
         self.nombre = nombre
         self.cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.cliente.connect(("192.168.100.73", 5555))
-        self.cliente.send(self.nombre.encode())  # Envia el nombre al servidor
+        self.cliente.connect(("192.168.1.108", 5555))
+
+        # Envia el nombre al servidor
+        self.cliente.send(self.nombre.encode())
 
     def escuchar(self):
         while True:
             try:
-                mensaje = self.cliente.recv(1024).decode()  # Recibe el mensaje
+                # Recibe el mensaje
+                mensaje = self.cliente.recv(1024).decode()
                 if mensaje == f"Se ha expulsado a {self.nombre}":
-                    salida = f"\033[1;31m \nTe han expulsado del servidor. \033[0m"  # el servidor te ha echado
+                    # el servidor te ha echado
+                    salida = f"\033[1;31m \nTe han expulsado del servidor. \033[0m"
                     self.mostrar_mensaje(salida)
                     self.cliente.close()
                     sys.exit()
 
-                elif mensaje.endswith("salir") or not mensaje:  # Si el mensaje es salir, el usuario se desconecta
+                # Si el mensaje es salir, el usuario se desconecta
+                elif mensaje.endswith("salir") or not mensaje:
                     print(f"\n\033[1;31m \n El servidor se ha cerrado \033[0m")
                     self.cliente.close()
                     sys.exit()
@@ -28,12 +33,13 @@ class Cliente:
                 self.mostrar_mensaje(mensaje)
 
             except:
-                print("\nError de conexión.")  # En caso de error, se cierra el socket
+                # En caso de error, se cierra el socket
+                print("\nError de conexión.")
                 self.cliente.close()
                 break
 
     def mostrar_mensaje(self, mensaje):
-        print("\r" + " " * 80, end="")  # Da formato al mensaje
+        print("\r" + " " * 80, end="")
         print("\r" + mensaje)
 
         if mensaje != f"Se ha expulsado a {self.nombre}" or mensaje != "El servidor se ha cerrado":
@@ -41,16 +47,24 @@ class Cliente:
 
     def enviar(self):
         while True:
-            mensaje = input("> ")  # Recoge el mensaje
-            if mensaje.strip().lower() == "/salir":  # Si el mensaje del cliente es salir, se desconecta del servidor
-                self.cliente.send(f"{self.nombre}: salir".encode())  # Envia al servidor que se ha desconectado
+            # Recoge el mensaje
+            mensaje = input("> ")
+
+            # Si el mensaje del cliente es salir, se desconecta del servidor
+            if mensaje.strip().lower() == "/salir":
+                # Envia al servidor que se ha desconectado
+                self.cliente.send(f"{self.nombre}: salir".encode())
                 break
 
-            self.cliente.send(f"{self.nombre}: {mensaje}".encode())  # Si no, envia la información al servidor
+            # Si no, envia la información al servidor
+            self.cliente.send(f"{self.nombre}: {mensaje}".encode())
 
     def ejecutar(self):
-        threading.Thread(target=self.escuchar, daemon=True).start()  # Ejecuta la función de escuchar en un hilo
-        self.enviar()  # El hilo principal es el de enviar información
+        # Ejecuta la función de escuchar en un hilo
+        threading.Thread(target=self.escuchar, daemon=True).start()
+
+        # El hilo principal es el de enviar información
+        self.enviar()
 
 
 if __name__ == "__main__":

@@ -16,16 +16,21 @@ class Servidor:
             "CIAN_CLARO": "\033[1;36m"
         }
 
-        self.ipServer = "192.168.100.73"
-        self.datos_usuarios = {}  # socket: {ip, nombre, color, hilo} - Formato del diccionario
+        self.ipServer = "192.168.1.108"
+
+        # socket: {ip, nombre, color, hilo} - Formato del diccionario
+        self.datos_usuarios = {}
         self.servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.servidor.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.servidor.bind((self.ipServer, 5555))
-        self.servidor.listen()  # el servidor empieza a esuchar
 
-        self.historial = "historial.json"
+        # el servidor empieza a esuchar
+        self.servidor.listen()
 
-    def elegir_color(self):  # función que se encarga de elegir un color aleatorio sin que esté repetido
+        self.historial = "../public/historial.json"
+
+    def elegir_color(self):
+        # función que se encarga de elegir un color aleatorio sin que esté repetido
         colores_disponibles = list(self.colores.values())
         usados = [datos["color"] for datos in self.datos_usuarios.values()]
         disponibles = list(set(colores_disponibles) - set(usados))
@@ -33,118 +38,171 @@ class Servidor:
 
     def conectar(self):
         while True:
-            cliente, direccion = self.servidor.accept()  # acepta la conexión y obtiene los datos
-            nombre = cliente.recv(1024).decode()  # recibe el primer mensaje que contiene el nombre
+            # acepta la conexión y obtiene los datos
+            cliente, direccion = self.servidor.accept()
 
+            # recibe el primer mensaje que contiene el nombre
+            nombre = cliente.recv(1024).decode()
+
+            # guarda todos los datos en el diccionario que se relaciona con el socket
             datos = {
                 "ip": direccion,
                 "nombre": nombre,
                 "color": self.elegir_color(),
                 "hilo": threading.Thread(target=self.escuchar, args=(cliente,))
-            }  # guarda todos los datos en el diccionario que se relaciona con el socket
+            }
 
-            self.datos_usuarios[cliente] = datos  # compara el socket con el diccionario anterior
-            datos["hilo"].start()  # empieza el hilo de escuchar al cliente, por lo que empieza la envía
+            # compara el socket con el diccionario anterior
+            self.datos_usuarios[cliente] = datos
+
+            # empieza el hilo de escuchar al cliente, por lo que empieza la envía
+            datos["hilo"].start()
 
             print(f"\r{datos['color']}Se ha conectado {nombre} desde {direccion[0]}\033[0m")  # Muestra que se han
             self.guardar_en_historial("servidor", f"se ha conectado {nombre} desde {direccion[0]}")
             print("> ", end="", flush=True)  # conectado usuarios
 
-    def escuchar(self, cliente):  # Cada funcion de escuchar se ejecuta en un hilo distinto
+    def escuchar(self, cliente):
+        # Cada funcion de escuchar se ejecuta en un hilo distinto
         while True:
             try:
                 mensaje = cliente.recv(1024).decode()  # Recibe el mensaje
                 time.sleep(0.1)
-                if not mensaje or mensaje.split(": ")[-1].strip() == "salir":  # Comprueba que el mensaje no sea salir
-                    self.guardar_en_historial(cliente, mensaje)
-                    self.desconectar_cliente(cliente)  # En caso de que sea salir, desconecta al cliente
-                    break  # rompe el bucle
 
-                datos = self.datos_usuarios[cliente]  # Obtiene los datos de los usuarios
+                # Comprueba que el mensaje no sea salir
+                if not mensaje or mensaje.split(": ")[-1].strip() == "salir":
+                    self.guardar_en_historial(cliente, mensaje)
+
+                    # En caso de que sea salir, desconecta al cliente
+                    self.desconectar_cliente(cliente)
+                    break
+
+                # Obtiene los datos de los usuarios
+                datos = self.datos_usuarios[cliente]
+
                 # Da formato al mensaje para que se muestre del color adecuado
                 mensaje_coloreado = f"{datos['color']}{mensaje}\033[0m"
 
-                self.mostrar_mensaje(mensaje_coloreado)  # Muestra el mensaje con el formato elegido
-                self.guardar_en_historial(cliente, mensaje)  # Guarda mensaje sin colorear
-                self.reenviar_mensaje(mensaje_coloreado, cliente)  # Reenvia el mensaje a todos los clientes
+                # Muestra el mensaje con el formato elegido
+                self.mostrar_mensaje(mensaje_coloreado)
+
+                # Guarda mensaje sin colorear
+                self.guardar_en_historial(cliente, mensaje)
+
+                # Reenvia el mensaje a todos los clientes
+                self.reenviar_mensaje(mensaje_coloreado, cliente)
 
             except:
-                self.desconectar_cliente(cliente)  # En caso de que haya un error escuchando, se desconecta el cliente
+                # En caso de que haya un error escuchando, se desconecta el cliente
+                self.desconectar_cliente(cliente)
                 break
 
     @staticmethod
-    def mostrar_mensaje(mensaje):  # Da un formato al mensaje para que se vea de una forma legible
+    def mostrar_mensaje(mensaje):
+        # Da un formato al mensaje para que se vea de una forma legible
         print("\r" + " " * 80, end="")
         print("\r" + mensaje)
         print("> ", end="", flush=True)
 
     def desconectar_cliente(self, cliente, saliendo=None):
-        if cliente not in self.datos_usuarios:  # Comprueba si el cliente existe
+        # Comprueba si el cliente existe
+        if cliente not in self.datos_usuarios:
             return
-        datos = self.datos_usuarios[cliente]  # En caso de que exista, obtiene los datos
 
-        mensaje = f"\033[1;31m{datos['nombre']} se ha desconectado.\033[0m"  # Formato del mensaje
+        # En caso de que exista, obtiene los datos
+        datos = self.datos_usuarios[cliente]
+
+        # Formato del mensaje
+        mensaje = f"\033[1;31m{datos['nombre']} se ha desconectado.\033[0m"
 
         if not saliendo:
-            self.mostrar_mensaje(mensaje)  # Muestra el mensaje de que ha salido del chat
+            # Muestra el mensaje de que ha salido del chat
+            self.mostrar_mensaje(mensaje)
 
-        self.reenviar_mensaje(mensaje, cliente)  # Reenvia el mensaje de que ha salido a todos los clientes
+        # Reenvia el mensaje de que ha salido a todos los clientes
+        self.reenviar_mensaje(mensaje, cliente)
 
         time.sleep(0.1)
-        del self.datos_usuarios[cliente]  # Elimina el socket de la lista de los clientes conectados
-        cliente.close()  # Cierra la conexión con el socket del cliente
+
+        # Elimina el socket de la lista de los clientes conectados
+        del self.datos_usuarios[cliente]
+
+        # Cierra la conexión con el socket del cliente
+        cliente.close()
 
     def reenviar_mensaje(self, mensaje, remitente):
-        for cliente in self.datos_usuarios:  # Recorre todos los sockets conectados
-            if cliente != remitente:  # No reenvía el mensaje al usuario que lo ha enviado, para que no le salga 2 veces
+        # Recorre todos los sockets conectados
+        for cliente in self.datos_usuarios:
+            if cliente != remitente:
                 try:
+                    # No reenvía el mensaje al usuario que lo ha enviado, para que no le salga 2 veces
                     cliente.send(mensaje.encode())  # Envia el mensaje al cliente
+
                 except:
-                    self.desconectar_cliente(cliente)  # En caso de error, desconecta al cliente para evitar errores
+                    # En caso de error, desconecta al cliente para evitar errores
+                    self.desconectar_cliente(cliente)
 
     def enviar(self):
         while True:
-            mensaje = input("> ")  # Recoge el mensaje que envía el servidor
-            if mensaje == "/cerrar":  # En caso de que el mensaje sea salir, cierra el servidor completo
+            # Recoge el mensaje que envía el servidor
+            mensaje = input("> ")
+
+            # En caso de que el mensaje sea salir, cierra el servidor completo
+            if mensaje == "/cerrar":
                 print(f"\n\033[1;31m \n Cerrando servidor... \033[0m")
                 self.guardar_en_historial("servidor", mensaje)
                 self.guardar_en_historial("servidor", "Cerrando servidor")
 
-                for cliente in list(self.datos_usuarios.keys()):  # Envia a todos los clientes
-                    cliente.send("Server: salir".encode())  # que el servidor va a cerrar
-                    self.desconectar_cliente(cliente, saliendo=True)  # Luego de enviar el mensaje de salir, desconecta los clientes
+                # Envia a todos los clientes que el servidor va a cerrar
+                for cliente in list(self.datos_usuarios.keys()):
+                    cliente.send("Server: salir".encode())
+
+                    # Luego de enviar el mensaje de salir, desconecta los clientes
+                    self.desconectar_cliente(cliente, saliendo=True)
+
                 break
 
-            elif "/kick" in mensaje:  # Si el mensaje es /kick, expulsa al usuario
+            # Si el mensaje es /kick, expulsa al usuario
+            elif "/kick" in mensaje:
                 self.expulsar(mensaje)
 
-            elif "/users" == mensaje:  # Si el mensaje es /users, muestra los usuarios
+            # Si el mensaje es /users, muestra los usuarios
+            elif "/users" == mensaje:
                 self.mostrar_usuarios()
 
             self.guardar_en_historial("servidor", mensaje)
-            mensaje_formateado = f"\033[1;36mServidor: {mensaje}\033[0m"  # Formatea el mensaje
-            self.reenviar_mensaje(mensaje_formateado, None)  # Lo reenvía a todos los clientes
+
+            # Formatea el mensaje
+            mensaje_formateado = f"\033[1;36mServidor: {mensaje}\033[0m"
+
+            # Lo reenvía a todos los clientes
+            self.reenviar_mensaje(mensaje_formateado, None)
 
     def ejecutar(self):
-        threading.Thread(target=self.conectar, daemon=True).start()  # Empieza el hilo para que se conecte el cliente
-        self.enviar()  # El hilo principal es el de enviar información
+        threading.Thread(target=self.conectar, daemon=True).start()
+        # El hilo principal es el de enviar información
+        self.enviar()
 
     def mostrar_usuarios(self):
         print(f"CLIENTES CONECTADOS: {len(list(self.datos_usuarios.values()))}")
         print("-------------------------")
-        for clientes in list(self.datos_usuarios.values()):  # Recorre todos los clientes para mostrar su nombre y su IP
+        # Recorre todos los clientes para mostrar su nombre y su IP
+        for clientes in list(self.datos_usuarios.values()):
             print(f"Nombre: {clientes['nombre']} - IP: {clientes['ip']}")
 
     def expulsar(self, mensaje):
         try:
             usuario = mensaje.split("/kick ")[1]
             encontrado = False
-            for cliente, info in list(self.datos_usuarios.items()):  # Recorre los clientes para saber su nombre,
-                if info["nombre"] == usuario:  # y así expulsar al usuario
+
+            # Recorre los clientes para saber su nombre, y así expulsar al usuario
+            for cliente, info in list(self.datos_usuarios.items()):
+                if info["nombre"] == usuario:
 
                     self.reenviar_mensaje(f"Se ha expulsado a {usuario}", None)
 
-                    self.desconectar_cliente(cliente)  # Llama a la función desconectar para echarlo
+                    # Llama a la función desconectar para echarlo
+                    self.desconectar_cliente(cliente)
                     encontrado = True  # Para comprobar que el usuario existe
 
             if not encontrado:
