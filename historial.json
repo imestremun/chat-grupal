@@ -1,0 +1,32 @@
+[
+    {
+        "timestamp": "2025-05-30 13:18:15",
+        "ip": "192.168.100.73",
+        "nombre": "Servidor",
+        "mensaje": "se ha conectado edu desde 192.168.100.73"
+    },
+    {
+        "timestamp": "2025-05-30 13:18:19",
+        "ip": "192.168.100.73",
+        "nombre": "Servidor",
+        "mensaje": "/kick edu"
+    },
+    {
+        "timestamp": "2025-05-30 13:18:40",
+        "ip": "192.168.100.73",
+        "nombre": "Servidor",
+        "mensaje": "se ha conectado edu desde 192.168.100.73"
+    },
+    {
+        "timestamp": "2025-05-30 13:18:43",
+        "ip": "192.168.100.73",
+        "nombre": "Servidor",
+        "mensaje": "/kick edu"
+    },
+    {
+        "timestamp": "2025-05-30 13:19:32",
+        "ip": "192.168.100.73",
+        "nombre": "Servidor",
+        "mensaje": "se ha conectado edu desde 192.168.100.73"
+    }
+]
